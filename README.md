@@ -1,5 +1,8 @@
 # Project-Bot
 
+## Live Demo
+https://cs-24-dat-2-01.studentproject.aau.dk/auth/discord/login
+
 ## Dependencies
 - Docker
 - Docker compose
