@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<%- include('partials/head'); %>
+
+<body class ="h-screen">
+    <!--  Header  -->
+    <%- include('partials/header'); %>
+    <!--  Whole Page  -->
+    <main class="h-[calc(100vh)] bg-slate-800 w-full absolute top-14">
+        <!--  Sidebar  -->
+        <%- include('partials/sidebar'); %>
+
+        <!--  Main Page  -->
+        <div class="pl-[60px] lg:pl-[240px] transition-all duration-500 ease-in-out">
+            <% /* %>
+            <div class="my-4 flex justify-center">
+                <div class="grid grid-cols-3 gap-4">
+                    <% guilds.forEach(function(guild) { %>
+                        <button class="relative focus:outline-none" onclick="addToServer('<%= guild.id %>')" id="<%= guild.id %>">
+                            <div class="border border-black bg-gray-600 overflow-hidden relative hover:bg-green-500">
+                                <img class="w-full h-full object-cover max-w-64 max-h-64 transition-opacity duration-300 opacity-100 hover:opacity-0" src="<%= guild.icon %>" alt="Image">
+                                <span class="absolute inset-0 flex justify-center items-center font-bold text-white max-w-full overflow-hidden whitespace-nowrap transition-opacity duration-300 opacity-100 hover:opacity-0" style="text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; font-size: clamp(1.5rem, 1.5vw, 3rem);">
+                                    <%= guild.name %>
+                                </span>
+                                <div class="absolute inset-0 flex justify-center items-center bg-green-500 opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10" fill="none"/>
+                                        <line x1="12" y1="8" x2="12" y2="16"/>
+                                        <line x1="8" y1="12" x2="16" y2="12"/>
+                                    </svg>
+                                    <div class="absolute text-white font-bold text-lg" style="bottom: 28px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">
+                                        Click to add Arn Bot to <%= guild.name %>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+                    <% }); %>                
+                </div>
+            </div>
+           <% */ %>
+        </div>
+
+    </main>
+
+<%- include('partials/dropdown'); %>
+
+</body>

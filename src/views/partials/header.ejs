@@ -1,0 +1,59 @@
+<!-- header -->
+<header class="h-14 bg-slate-600 top-0 w-full fixed shadow" style="z-index: 99999;">
+    <div class="flex justify-between items-center px-10 h-14">
+        <div class="flex justify-between items-center gap-x-14">
+            <div class="w-30">
+                <h2 class="text-md font-bold text-gray-100" href="#">Projectbot</h2>
+                <p class="text-gray-400 text-[12px]">
+                    Centralized Discord Control
+                </p>
+            </div>
+        </div>
+
+        <ul class="flex items-center gap-5">
+
+            <!-- Server dropdown -->
+            <li class="relative">
+                <button id="dropdown-toggle" class="w-full block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="toggleServerDropdown()">Servers</button>
+                <ul id="server-dropdown" class="absolute hidden bg-white top-14 rounded shadow-md w-60">
+                    <!-- Guilds will be dynamically added here using JavaScript -->
+                    <li class="relative flex justify-center">
+                        <button class="flex items-center flex-grow px-4 py-2 text-gray-800 hover:bg-gray-100 focus:outline-none" onclick="addServer()">
+                            <img class="w-6 h-6 rounded-full mr-2" src="../../public/assets/greenPlus.png" alt="Add Guild">
+                            Add Server
+                        </button>
+                    </li>
+                </ul>
+            </li>
+
+            <h1 class="text-gray-100 text-md font-bold" id="discordNavn">
+                <%= username %>
+            </h1>
+
+            <li class="" onclick="openUserDropdown()" id="dropdownToggle">
+                <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white cursor-pointer"
+                    src="<%= avatarURL %>"
+                    alt="" id="discordImage">
+                <ul id="user-dropdown" class="absolute hidden bg-white right-4 top-14 w-28 rounded shadow-md">
+                    <li class="mb-1 hover:bg-gray-50 text-gray-700 hover:text-gray-900"><a class="block px-5 py-2"
+                            href="/auth/discord/logout">Log Ud</a></li>
+                </ul>
+            </li>
+            
+        </ul>
+    </div>
+</header>
+<!-- header enc -->
+
+<script>
+    // toggle server dropdown when clicking anywhere else on the page
+    document.addEventListener('click', function(event) {
+        var dropdownToggle = document.getElementById('dropdownToggle');
+        var dropdown = document.getElementById('user-dropdown');
+        var isClickInside = dropdownToggle.contains(event.target);
+
+        if (!isClickInside && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+</script>

@@ -1,0 +1,185 @@
+<script>
+    // Toggle user dropdown
+    function openUserDropdown() {
+        document.getElementById('user-dropdown').classList.toggle('hidden')
+    }
+
+    async function toggleServerDropdown() {
+        var dropdown = document.getElementById("server-dropdown");
+
+        if (dropdown.classList.contains("hidden")) {
+            // Dropdown is hidden, send GET request to fetch enabled guilds
+            try {
+                const response = await fetch('/get-enabled-guilds');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch enabled guilds');
+                }
+                const data = await response.json();
+                const enabledGuilds = data.enabledGuilds;
+
+                // Create the guild buttons
+                populateDropdown(enabledGuilds);
+
+                // Show the dropdown
+                dropdown.classList.remove("hidden");
+
+                // Set the default selected guild if localStorage value is null or undefined
+                let selectedGuildId = localStorage.getItem('selectedGuildId');
+                if (!selectedGuildId) {
+                    // If localstorage is null or undefined we set the first button to be the standard enabled
+                    selectedGuildId = enabledGuilds.length > 0 ? enabledGuilds[0].id : null;
+                    localStorage.setItem('selectedGuildId', selectedGuildId);
+                }
+            } catch (error) {
+                console.error('Error fetching enabled guilds:', error);
+                // Handle error
+            }
+        } else {
+            // Dropdown is visible, hide it
+            dropdown.classList.add("hidden");
+        }
+    }
+
+    // USed to populate the dropdwon with the necessary buttons
+    function populateDropdown(enabledGuilds) {
+        // Get the server dropdown
+        var dropdown = document.getElementById("server-dropdown");
+        // Clear the existing items
+        dropdown.innerHTML = '';
+
+        // Get the selected guild ID from localStorage
+        let selectedGuildId = localStorage.getItem('selectedGuildId');
+
+        // Flag to check if the selected guild has been found in the enabled guilds list
+        let selectedGuildFound = false;
+
+        const trelloLink = document.getElementById('trelloButton');
+        const githubLink = document.getElementById('githubButton');
+        const googleCalendarLink = document.getElementById('googleCalendarButton');
+
+        // Iterate over the enabled guilds and buttons
+        enabledGuilds.forEach(function(guild) {
+            var li = document.createElement('li');
+            li.id = 'guild-' + guild.id;
+            li.className = 'guild-item mb-1 hover:bg-gray-50 text-gray-700 hover:text-gray-900 relative';
+            var div = document.createElement('div');
+            div.className = 'guild-button flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 focus:outline-none cursor-pointer';
+            div.setAttribute('data-guild-id', guild.id);
+            div.innerHTML = '<img class="w-6 h-6 rounded-full mr-2" src="' + guild.icon + '" alt="Guild Icon">' + guild.name;
+            var span = document.createElement('span');
+            span.className = 'absolute right-0 mr-2 hidden';
+            span.innerHTML = '&#10003;'; // Initially hidden checkmark
+            div.appendChild(span);
+            li.appendChild(div);
+            dropdown.appendChild(li);
+
+            // Check if the current guild matches the selectedGuildId
+            if (guild.id === selectedGuildId) {
+                selectedGuildFound = true;
+                // Show the checkmark for the selected guild button
+                span.classList.remove('hidden');
+            }
+
+            // Add event listener to the newly created guild button
+            div.addEventListener('click', function() {
+                console.log("Button pressed!");
+                const guildId = this.dataset.guildId;
+                console.log(guildId)
+
+                trelloLink.href = `/integration?integration=Trello&guild=${guildId}`;
+                githubLink.href = `/integration?integration=GitHub&guild=${guildId}`;
+                googleCalendarLink.href = `/integration?integration=GoogleCalendar&guild=${guildId}`;
+
+                const prevSelectedGuildButton = document.querySelector('.guild-button .absolute:not(.hidden)');
+                if (prevSelectedGuildButton) {
+                    prevSelectedGuildButton.classList.add('hidden');
+                }
+
+                this.querySelector('.absolute').classList.remove('hidden');
+
+                if (selectedGuildId !== guildId) {
+                    selectedGuildId = guildId;
+
+                    localStorage.setItem('selectedGuildId', selectedGuildId);
+
+                    // Send PATCH request to update selected guild
+                    fetch(`/change-selected-guild`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            integration: '<%= title %>',
+                            guild: selectedGuildId
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to update selected guild');
+                        }
+                        return response.json(); // Parse JSON response
+                    })
+                    .then(data => {
+                        console.log('Selected guild updated successfully');
+                        // Check if we should reload and ig we got the newly selected guild and the url we should reload to
+                        if (data.reload && data.url) {
+                            // Reload the page with the new URL
+                            window.location.href = data.url;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating selected guild:', error);
+                    });
+                }
+            });
+        });
+
+        // Set the selectedGuildId to the first one if it wasnt found
+        if (!selectedGuildFound && enabledGuilds.length > 0) {
+            selectedGuildId = enabledGuilds[0].id;
+            localStorage.setItem('selectedGuildId', selectedGuildId);
+        }
+
+        // Add the "Add Server" button
+        var addServerButton = document.createElement('li');
+        addServerButton.className = 'relative flex justify-center';
+        addServerButton.innerHTML = `
+            <button class="flex items-center flex-grow px-4 py-2 text-gray-800 hover:bg-gray-100 focus:outline-none" id="addServerButton" onclick="addServer()">
+                <img class="w-6 h-6 rounded-full mr-2" src="../../public/assets/greenPlus.png" alt="Add Guild">
+                Add Server
+            </button>
+        `;
+        //Append it at the bottom
+        dropdown.appendChild(addServerButton);
+    }
+
+    function addServer() {
+            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=1218589827533111437&permissions=8&scope=bot%20applications.commands`;
+
+            window.open(authUrl, '_blank');
+
+            document.getElementById("server-dropdown").classList.add("hidden");
+        }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedGuildId = localStorage.getItem('selectedGuildId');
+        if (selectedGuildId !== null) {
+            const trelloLink = document.getElementById('trelloButton');
+            const githubLink = document.getElementById('githubButton');
+            const googleCalendarLink = document.getElementById('googleCalendarButton');
+
+            trelloLink.href = `/integration?integration=Trello&guild=${selectedGuildId}`;
+            githubLink.href = `/integration?integration=GitHub&guild=${selectedGuildId}`;
+            googleCalendarLink.href = `/integration?integration=GoogleCalendar&guild=${selectedGuildId}`;
+        }
+    });
+
+    //Close dropdown when clicked outside of
+    document.addEventListener("click", function(event) {
+        const dropdownMenu = document.getElementById("server-dropdown");
+        const dropdownToggle = document.getElementById("dropdown-toggle");
+        if (!dropdownToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+            dropdownMenu.classList.add("hidden");
+        }
+    });
+</script>

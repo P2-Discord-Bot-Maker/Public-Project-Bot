@@ -1,0 +1,52 @@
+{
+  "name": "p2projekt",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "run": "npm run build:css && node src/router.js",
+    "dev": "npx tailwindcss -i ./src/public/css/style.css -o ./src/public/css/main.css && node src/index.js",
+    "register-discord-commands": "node src/backend/register-commands.js",
+    "test": "mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
+    "@octokit/core": "^6.1.2",
+    "autoprefixer": "^10.4.18",
+    "axios": "^1.6.8",
+    "cookie-parser": "^1.4.6",
+    "crypto": "^1.0.1",
+    "date-fns": "^3.6.0",
+    "discord.js": "^14.12.1",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "express-validator": "^7.0.1",
+    "fastify": "^4.27.0",
+    "google-auth-library": "^9.7.0",
+    "googleapis": "^105.0.0",
+    "marked": "^12.0.2",
+    "mysql2": "^3.9.6",
+    "ngrok": "^5.0.0-beta.2",
+    "node-fetch": "^3.3.2",
+    "node-trello": "^1.3.0",
+    "path": "^0.12.7",
+    "postcss": "^8.4.35",
+    "postcss-cli": "^11.0.0",
+    "querystring": "^0.2.1",
+    "trello": "^0.11.0",
+    "trello-node-api": "^0.0.9",
+    "url": "^0.11.3",
+    "util": "^0.12.5",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^10.4.0",
+    "tailwindcss": "^3.4.1"
+  },
+  "description": "Run following command in this directory\r ```bash\r npm install\r ```",
+  "main": "postcss.config.js",
+  "keywords": []
+}

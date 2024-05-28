@@ -1,0 +1,73 @@
+<!-- left sidebar -->
+<aside id="sidebar"
+class="w-[60px] lg:w-[240px] h-[calc(100vh)] whitespace-nowrap fixed shadow overflow-x-hidden transition-all duration-500 ease-in-out">
+<div class="flex flex-col justify-between h-full bg-slate-700 text-">
+    <ul class="flex flex-col gap-1 mt-2">
+        
+        <li id="discordButton" about="Discord" class="text-slate-200 transition ease-in-out hover:bg-blue-300 hover:text-gray-900 ">
+            <a class="flex items-center py-3 pl-3" href="/">
+                <span class="px-4">
+                    <i class="fa fa-info-circle fa-fw"></i>
+                </span>
+                <span class="whitespace-nowrap pl-1">Guide</span>
+            </a>
+        </li>
+
+        <li about="github" class="text-slate-200 transition ease-in-out hover:bg-slate-300 hover:text-gray-900">
+            <a id="githubButton" class="flex items-center py-3 pl-3" href="/integration?integration=GitHub">
+                <span class="px-4">
+                    <i class="fab fa-github fa-fw"></i>
+                </span>
+                <span class="whitespace-nowrap pl-1">GitHub</span>
+            </a>
+        </li>
+
+        <li about="googlecalendar" class="text-slate-200 transition ease-in-out hover:bg-red-300 hover:text-gray-900">
+            <a id="googleCalendarButton" class="flex items-center py-3 pl-3" href="/integration?integration=GoogleCalendar">
+                <span class="px-4">
+                    <i class="far fa-calendar-days fa-fw"></i>
+                </span>
+                <span class="whitespace-nowrap pl-1">Google Calendar</span>
+            </a>  
+        </li>
+
+        <li about="trello" class="text-slate-200 transition ease-in-out hover:bg-purple-300 hover:text-gray-900">
+            <a id="trelloButton" class="flex items-center py-3 pl-3" href="/integration?integration=Trello">
+                <span class="px-4">
+                    <i class="fab fa-trello fa-fw"></i>
+                </span>
+                <span class="whitespace-nowrap pl-1">Trello</span>
+            </a>
+        </li>
+    </ul>
+</div>
+</aside>
+
+<script>
+    // Object with the colors for each site
+    const siteColor = {
+        trello: 'bg-purple-300',
+        github: 'bg-slate-300',
+        googlecalendar: 'bg-red-300',
+        discord: 'bg-blue-300',
+        about: 'bg-blue-100'
+    }
+    // Getting the pathname
+    const {
+        pathname
+    } = window.location
+    splitPath = pathname.split("/")[1];
+    // Getting every li node on the sidebar.
+    const li = document.querySelectorAll('#sidebar li');
+    // going through every node, and setting classes accordingly
+    li.forEach((node) => {
+       const about = node.getAttribute('about');
+       if (about === splitPath) {
+           node.setAttribute('class', `transition ease-in-out ${siteColor[splitPath]} text-gray-900`);
+       } else {
+           node.setAttribute('class', `text-slate-200 transition ease-in-out hover:${siteColor[about]} hover:text-gray-900`);
+       }
+    });
+   
+</script>
+

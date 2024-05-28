@@ -1,0 +1,17 @@
+# Use an official Node.js runtime as the base image
+FROM node:latest
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy package.json and package-lock.json to the working directory
+COPY . .
+
+# Set node environment
+ENV NODE_ENV=production
+
+# Install dependencies
+RUN npm install
+
+# Command to run your application
+CMD sleep 15 && npm run dev

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<%- include('partials/head'); %>
+
+<style>
+
+    .reset-css{
+        all: initial;
+    }
+
+    .container {
+        height: 85vh;
+        overflow: scroll;
+        font-family: Arial, sans-serif;
+        margin: 20px auto;
+        padding: 20px;
+        max-width: 800px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        color: #333;
+    }
+
+    .container h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-top: 20px;
+    }
+
+    .container h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .container h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .container p {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+
+    .container a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .container a:hover {
+        text-decoration: underline;
+    }
+
+    .container ol {
+        list-style-type: decimal;
+    }
+
+    .container ul{
+        list-style: square;
+    }
+
+    .container ul ul{
+        list-style: inside;
+    }
+
+    .container code{
+        background-color: #fae6b6;
+    }
+
+
+    .container ul, .container ol {
+        margin-bottom: 15px;
+        padding-left: 20px;
+    }
+
+    .container ul li, .container ol li {
+        font-size: 16px;
+        line-height: 1.6;
+    }
+</style>
+
+<body class ="h-screen">
+    <!--  Header  -->
+    <%- include('partials/header'); %>
+    <!--  Whole Page  -->
+    <main class="h-[calc(100vh)] bg-slate-800 w-full absolute top-14">
+        <!--  Sidebar  -->
+        <%- include('partials/sidebar'); %>
+
+        <!--  Main Page  -->
+        <div class="pl-[60px] lg:pl-[240px] transition-all duration-500 ease-in-out">
+            <div class="reset-css">
+                <div class="container">
+                    <%- content %>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+<%- include('partials/dropdown'); %>
+
+</body>

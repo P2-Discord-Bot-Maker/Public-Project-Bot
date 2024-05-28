@@ -1,0 +1,568 @@
+<!-- Content -->
+<div class="my-4 flex">
+    <!-- Title -->
+    <div class="ml-4 mr-4 rounded-lg bg-gray-600 p-4 w-40 h-12 flex justify-between items-center shadow-md">
+        <p class="text-left text-white font-bold text-l"><%= title %></p>
+    </div>
+    <!-- Default channel dropdown -->
+    <div class="ml-4 rounded-lg bg-gray-600 p-4 flex items-center h-12 shadow-md">
+        <p class="text-left text-white font-bold mr-2 whitespace-nowrap">Discord Channel:</p>
+        <select name="discordChannel" id="discordChannelDropdown" class="h-7 w-full flex-grow drop-shadow-lg">
+            <% channels.forEach(function(channel) { %>
+                <option value="<%= channel.id %>" <% if (channel.id === settings.discord_channel) { %> selected <% } %>><%= channel.name %></option>
+            <% }); %>
+        </select>
+    </div>
+    <!-- Settings Button -->
+    <div class="ml-4">
+        <button id="openTokens" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+            <span class="flex items-center">
+                <img src="../../public/assets/settingsIcon.png" alt="Icon" class="h-8 w-8">
+            </span>
+        </button>
+    </div>    
+</div>
+<!--Enabled notifications-->
+<div class="my-2 mx-4 rounded-lg bg-gray-600 p-4 flex flex-col justify-between shadow-md">
+    <p class="text-center text-white font-bold text-xl">Notifications</p>
+    <div class="content-container" id="notificationsContainer">
+        <!-- Notifications here -->
+    </div>
+    <button class="icon-button bg-green-500 text-white hover:bg-green-600 px-3 py-2 rounded shadow-md" title="Add Notifications" id="addNotifications">
+        <i class="fas fa-plus"></i>
+    </button>
+</div>
+<!-- Enabled commands -->
+<div class="my-2 mx-4 rounded-lg bg-gray-600 p-4 flex flex-col justify-between shadow-md">
+    <p class="text-center text-white font-bold text-xl">Commands</p>
+    <div class="content-container" id="commandsContainer">
+        <!-- Commands here -->
+    </div>
+    <button class="icon-button bg-green-500 text-white hover:bg-green-600 px-3 py-2 rounded shadow-md" title="Add Commands" id="addCommands">
+        <i class="fas fa-plus"></i>
+    </button>
+</div>
+
+<div id="settingsWindow" class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white p-8 rounded shadow-lg relative">
+        <img id="closeSettings" src="../../public/assets/closeIcon.png" alt="Close" class="absolute top-0 right-0 p-2 cursor-pointer w-16 h-16 min-w-16 min-h-16">
+        <div class="content-container">
+            <!-- Token boxes will be added here -->
+        </div>
+        <div class = "flex justify-center">
+            <button id = "tokensApplyButton" class="bg-green-500 text-white px-4 py-2 rounded mt-2">Apply</button>
+        </div>
+    </div>
+</div>
+<div id="servicesWindow" class="fixed top-10 left-0 w-full h-full flex items-center justify-center hidden z-50">
+    <div class="bg-gray-700 bg-opacity-50 w-full h-full flex items-center justify-center">
+        <div class="bg-gray-600 p-8 rounded shadow-lg relative max-h-screen overflow-y-auto z-50 flex flex-col">
+            <img id="closeButton" src="../../public/assets/closeIcon.png" alt="Close" class="absolute top-0 right-0 p-2 cursor-pointer w-16 h-16 min-w-16 min-h-16 z-50 mt-4 mr-4">
+            <div id="servicesContainer" class="content-container flex-grow pr-16 pb-4"> <!-- Added pb-4 for bottom padding -->
+                <!-- Services boxes will be added here -->
+            </div>
+            <div class="flex justify-center">
+                <button id="addButton" class="bg-green-500 text-white px-3 py-2 rounded shadow-md mt-4">Apply</button> <!-- Added mt-4 for top margin -->
+            </div>
+        </div>
+    </div>
+</div>
+<%- include('infopopup') %>
+
+<script>
+
+//#region Requests
+
+/**
+ * Sends a delete request for the given service to the server.
+ * @param {Element} serviceElement The element representing the service to delete
+ * @param {string} type The type of service to delete (commands or notifications)
+ * @param {string} serviceElement The name of the service to delete
+ */
+async function deleteService(serviceElement, type, servicesContainer) {
+    console.log('serviceElement:', serviceElement, 'type:', type);
+    const service = serviceElement.querySelector('#nameText').textContent.replace(/^\//, '');
+    console.log('Deleting service:', service);
+    await fetch('/remove-service', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            guild: localStorage.selectedGuildId,
+            integration: '<%= title %>',
+            serviceType: type,
+            service: service
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to delete service');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+        serviceElement.remove();
+    })
+    .catch(error => {
+        console.error('Error:', error.message);
+    });
+
+    await populateContainer(false, servicesContainer, type, [], null, null, null, null, null);
+}
+
+/**
+ * Sends a post request to the server to add the services.
+ * @param {Array} services The services to add
+ * @param {string} type The type of service to add (commands or notifications)
+ */
+async function addAvailableServices(services, type) {
+    console.log("Services: ", services, "type:", type);
+    return await fetch('/add-services', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            guild: localStorage.selectedGuildId,
+            integration: '<%= title %>',
+            serviceType: type,
+            services: services
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                throw new Error(errorData.error);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("addAvailableServices addedServices:", data.addedServices);
+        return data.addedServices;
+    })
+    .catch(error => {
+        showInfo(error);
+    });
+}
+
+/**
+ * Requests the available services of the given type from the server.
+ * @param {string} type The type of service to get (commands or notifications)
+ * @returns {Promise} A promise that resolves with the available services
+ */
+async function getAvailableServices(type) {
+    try {
+        console.log("getting services");
+        const title = "<%= title %>";
+        const response = await fetch(`/get-services?integration=${title}&guild=${localStorage.selectedGuildId}&serviceType=${type}`);
+        if (!response.ok) {
+            throw new Error('Failed to get services');
+        }
+        const data = await response.json();
+
+        console.log("data from getAvailableServices: ",data);
+        return data;
+    } catch (error) {
+        console.error("getAvailableServices:", error.message);
+    }
+}
+
+/**
+ * Gets the tokens from the server.
+ * @returns {Promise} A promise that resolves with the tokens
+ */
+async function getTokens() {
+    let selectedGuildId = localStorage.getItem('selectedGuildId');
+    let integration = "<%= title %>";
+
+    if (!selectedGuildId) {
+        throw new Error("Could not get selectedGuildId");
+    }
+
+    try {
+        const response = await fetch(`/get-tokens?guild=${selectedGuildId}&integration=${integration}`, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch tokens: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.tokens || [];
+    } catch (error) {
+        console.error("Error fetching tokens:", error.message);
+        return [];
+    }
+}
+
+/**
+ * Updates the tokens on the server.
+ * @param {Array} tokens The tokens to update
+ */
+async function updateTokens() {
+    try {
+        const tokenContainer = document.getElementById('settingsWindow').querySelector('.content-container');
+        console.log('tokenContainer:', tokenContainer);
+        const tokensToUpdate = Array.from(tokenContainer.querySelectorAll('.token-box')).map(tokenBox => {
+                const inputField = tokenBox.querySelector('input');
+                console.log('inputField:', inputField.value);
+                return {
+                    name: inputField.previousElementSibling.textContent.replace(':', '').trim(),
+                    key: inputField.value
+                };
+            });
+        console.log('tokensToUpdate:', tokensToUpdate);
+        
+        const selectedGuildId = localStorage.getItem('selectedGuildId');
+        if (!selectedGuildId) {
+            throw new Error("Could not get selectedGuildId");
+        }
+
+        const integration = "<%= title %>";
+        const response = await fetch('/update-tokens', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                guild: selectedGuildId,
+                integration: integration,
+                tokens: tokensToUpdate
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        showInfo(data.message)
+    } catch (error) {
+        showInfo(error.message);
+    }
+}
+
+//#endregion Requests
+ 
+//#region Other Functions
+
+/**
+ * Populates a container with the given content
+ * @param {boolean} emptyTarget Whether the target should be emptied before populating
+ * @param {HTMLDivElement} target The container to be populated. Must be a HTML object.
+ * @param {string} type The type of content.
+ * @param {Array<object>} content The content to populate the container with
+ * @param {Array<boolean>} toggles An array of booleans if toggles should be created
+ * @param {function} editFunction The function which should be called when the edit button is pressed (default null)
+ * @param {Array<any>} editParams An array of values which will be passed as a parameter to the edit function
+ * @param {function} deleteFunction The function which should be called when the delete button is pressed (default null)
+ * @param {Array<any>} deleteParams An array of values which will be passed as a parameter to the delete function
+ */
+async function populateContainer(emptyTarget, target, type, content, toggles = null, editFunction = null, editParams = [], deleteFunction = null, deleteParams = []) {
+    if (emptyTarget) {
+        target.innerHTML = '';
+    }
+    if (content !== undefined && content.length > 0) {
+        const noContent = target.querySelector('#noContent');
+        if (noContent !== null) {
+            noContent.remove();
+        }
+
+        Array.from(content).forEach(item => {
+            console.log('item:', item);
+            const contentElem = document.createElement('div');
+            contentElem.classList.add('my-2', 'rounded-lg', 'bg-gray-700', 'p-2', 'flex', 'items-center');
+            contentElem.id = item.name;
+
+            const nameElem = document.createElement('div');
+            nameElem.classList.add('mx-2', 'rounded-lg', 'bg-gray-600', 'p-1', 'min-w-32', 'flex-1');
+            contentElem.appendChild(nameElem);
+
+            const nameText = document.createElement('p');
+            nameText.id = 'nameText';
+            nameText.classList.add('text-left', 'text-white', 'text-lg');
+            if (type === 'commands') {
+                nameText.textContent = `/${item.name}`;
+            } else {
+                nameText.textContent = `${item.name}`;
+            }
+            nameElem.appendChild(nameText);
+
+            const descriptionSection = document.createElement('div');
+            descriptionSection.classList.add('flex-grow');
+            const descriptionText = document.createElement('div');
+            descriptionText.textContent = item.description;
+            descriptionText.classList.add('bg-gray-600', 'rounded-md', 'px-4', 'py-2', 'text-white', 'focus:outline-none', 'focus:bg-gray-800');
+            descriptionSection.appendChild(descriptionText);
+            contentElem.appendChild(descriptionSection);
+
+            if (toggles) {
+                const toggleSection = document.createElement('div');
+                toggleSection.classList.add('toggle-section');
+
+                const toggleText = document.createElement('span');
+                toggleText.textContent = 'Enable';
+                toggleText.classList.add('ml-2', 'text-white');
+                toggleSection.classList.add('flex', 'items-center');
+
+                const checkmarkLabel = document.createElement('label');
+                checkmarkLabel.classList.add('cursor-pointer');
+                const checkmarkInput = document.createElement('input');
+                checkmarkInput.setAttribute('type', 'checkbox');
+                checkmarkInput.classList.add('form-checkbox', 'h-5', 'w-5', 'text-gray-600', 'rounded');
+                checkmarkInput.checked = item.enabled || false;
+
+                const checkmarkSpan = document.createElement('span');
+                checkmarkSpan.appendChild(checkmarkInput);
+                checkmarkSpan.appendChild(toggleText);
+                checkmarkLabel.appendChild(checkmarkSpan);
+                toggleSection.appendChild(checkmarkLabel);
+                contentElem.appendChild(toggleSection);
+            }
+
+            if (editFunction !== null) {
+                const editElem = document.createElement('button');
+                editElem.classList.add('icon-button', 'bg-blue-500', 'text-white', 'hover:bg-blue-600', 'px-3', 'py-2', 'rounded', 'ml-auto');
+                editElem.title = 'Edit';
+                const editIcon = document.createElement('i');
+                editIcon.classList.add('fas', 'fa-pencil-alt');
+
+                editElem.addEventListener('click', async () => {
+                    await editFunction(contentElem, ...editParams);
+                });
+                editElem.appendChild(editIcon);
+                contentElem.appendChild(editElem);
+            }
+
+            if (deleteFunction !== null) {
+                const deleteElem = document.createElement('button');
+                deleteElem.classList.add('icon-button', 'bg-red-500', 'text-white', 'hover:bg-red-600', 'px-3', 'py-2', 'rounded', 'ml-2');
+                deleteElem.title = 'Delete';
+                const deleteIcon = document.createElement('i');
+                deleteIcon.classList.add('fas', 'fa-trash-alt');
+
+                deleteElem.addEventListener('click', async () => {
+                    await deleteFunction(contentElem, ...deleteParams);
+                });
+                deleteElem.appendChild(deleteIcon);
+                contentElem.appendChild(deleteElem);
+            }
+
+            target.appendChild(contentElem);
+        });
+    } else {
+        if (target.querySelectorAll('div').length === 0 && target.querySelector('#noContent') === null) {
+            const noContent = document.createElement('p');
+            noContent.id = 'noContent';
+            noContent.classList.add('text-center', 'text-white');
+            noContent.textContent = `No ${type} enabled.`;
+            target.appendChild(noContent);
+        }
+    }
+}
+
+function populateTokenWindow(tokens) {
+    const settingsWindow = document.getElementById('settingsWindow');
+    const contentContainer = settingsWindow.querySelector('.content-container');
+
+    // Clear previous token boxes if any
+    contentContainer.innerHTML = '';
+
+    // Create a box for each token
+    tokens.forEach(token => {
+        const tokenBox = document.createElement('div');
+        tokenBox.classList.add('token-box', 'bg-gray-200', 'rounded', 'p-4', 'mb-4');
+
+        const nameLabel = document.createElement('label');
+        nameLabel.textContent = `${token}:`;
+        nameLabel.classList.add('mr-2');
+
+        const inputField = document.createElement('input');
+        inputField.setAttribute('type', 'text');
+        inputField.classList.add('ml-2');
+
+        tokenBox.appendChild(nameLabel);
+        tokenBox.appendChild(inputField);
+        contentContainer.appendChild(tokenBox);
+    });
+}
+
+/**
+ * Gets the services that have been toggled in the services window.
+ * @returns {Array} An array of the names of the services that have been toggled
+ */
+function getToggledElements(target) {
+    // Get all children of the servicesContainer
+    const containers = target.querySelectorAll('div');
+    // Initialize an array to store the toggled services
+    const toggledServices = [];
+    // Convert NodeList to an array using Array.from
+    Array.from(containers).forEach(container => {
+        // Get the toggle section and input
+        const toggleSection = container.querySelector('.toggle-section');
+        if (toggleSection != null) {
+            // Get the input element
+            const toggleInput = toggleSection.querySelector('input');
+            // If the input is checked, add the service to the toggledServices array
+            if (toggleInput.checked) {
+                // The name of the service is the id of the div
+                toggledServices.push(container.id);
+            }
+        }                
+    });
+
+    console.log("Toggled services:", toggledServices);
+    return toggledServices;
+}
+
+/**
+ *  Opens the services window and populates it with the available services.
+ *  @param {string} type The type of service to get (commands or notifications)
+ */
+async function servicesButton (type, servicesWindow, servicesContainer) {
+    try {
+        const { amount, services } = await getAvailableServices(type);
+        console.log("services:", services);
+        if (amount > 0) {
+            await populateContainer(true, servicesContainer, type, services, true, null, null, null, null); 
+            servicesWindow.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            servicesWindow.focus();
+        } else {
+            showInfo(`No ${type} available`);
+        }
+    } catch (error) {
+        console.error(`Error fetching available ${type}:`, error.message);
+    }
+}
+
+/**
+ * Updates the discord channel.
+ * @param {string} channel The channel to change to
+ */
+async function changeChannel (channel) {
+    const selectedGuildId = localStorage.getItem('selectedGuildId');
+    const pageTitle = "<%= title %>";
+
+    // Create data object to send as body of the request
+    const requestData = {
+        integration: pageTitle, // For now just getting the integration from the pageTitle
+        guild: selectedGuildId,
+        channel: channel
+    };
+
+    // Send PATCH request
+    fetch('/change-channel', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to change channel');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+        // Log response for testing
+    })
+    .catch(error => {
+        console.error('Error:', error.message);
+    });
+}
+
+//#endregion
+
+//#region Event Listeners
+// Executed when DOM Content has been loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    // Variable which is updated when the user presses the add commands/services button
+    let serviceType = '';
+    // The services window and container
+    const servicesWindow = document.getElementById('servicesWindow');
+    const servicesContainer = document.getElementById('servicesContainer');
+
+    // Populate the notifications box
+    const notificationsContainer = document.getElementById('notificationsContainer');
+    const notifications = <%- JSON.stringify(settings.notifications) %>;
+    // Call the method to populate the notifications container
+    await populateContainer(true, notificationsContainer, 'notifications', notifications, null, null, null, deleteService, ['notifications', notificationsContainer]);
+
+    // Add event listener to the add notifications button
+    const notificationsButton = document.getElementById('addNotifications');
+    notificationsButton.addEventListener('click', async () => {
+        serviceType = 'notifications';
+        await servicesButton('notifications', servicesWindow, servicesContainer);
+    });
+
+    const commandsContainer = document.getElementById('commandsContainer');
+    const commands = <%- JSON.stringify(settings.commands) %>;
+    // Call the method to populate the commands container
+    await populateContainer(true, commandsContainer, 'commands', commands, null, null, null, deleteService, ['commands', commandsContainer]);
+
+     // Add event listener to the add commands button
+    const commandsButton = document.getElementById('addCommands');
+    commandsButton.addEventListener('click', async () => {
+        serviceType = 'commands';
+        await servicesButton('commands', servicesWindow, servicesContainer);
+    });
+
+    // Add event listener to the apply services button
+    const applyServicesButton = document.getElementById('addButton');
+    applyServicesButton.addEventListener('click', async () => {
+        const toggledServices = getToggledElements(servicesContainer);
+        const addedServices = await addAvailableServices(toggledServices, serviceType);
+        console.log('addedServices:', addedServices);
+        const container = serviceType === 'commands' ? commandsContainer : notificationsContainer;
+        await populateContainer(false, container, serviceType, addedServices, null, null, null, deleteService, [serviceType]);
+        servicesWindow.classList.add('hidden');
+    });
+
+    // Add event listener to the close services button
+    const closeButton = document.getElementById('closeButton');
+    closeButton.addEventListener('click', function() {
+        servicesWindow.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    });
+
+    // Add event listener to change the discord channel
+    const discordChannelDropdown = document.getElementById('discordChannelDropdown');
+    discordChannelDropdown.addEventListener('change',async function(event) {
+        const selectedChannelId = event.target.value;
+        await changeChannel(selectedChannelId);
+    });
+
+    // Add event listener to the open settings button
+    const tokensWindow = document.getElementById('settingsWindow');
+    const openTokensButton = document.getElementById('openTokens');
+    openTokensButton.addEventListener('click', async () => {
+        const tokens = await getTokens();
+        populateTokenWindow(tokens);
+        tokensWindow.classList.remove('hidden');
+    });
+
+    // Add event listener to the apply tokens button
+    const applyTokensButton = document.getElementById('tokensApplyButton');
+    applyTokensButton.addEventListener('click', async () => {
+        tokensWindow.classList.add('hidden');
+        await updateTokens();
+    });
+    
+    // Add event listener to the close settings button
+    const closeSettingsButton = document.getElementById('closeSettings');
+    closeSettingsButton.addEventListener('click', function() {
+        tokensWindow.classList.add('hidden');
+    });
+})
+
+//#endregion   
+    
+</script>

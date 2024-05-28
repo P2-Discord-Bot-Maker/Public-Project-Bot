@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<%- include('partials/head'); %>
+
+<body class ="min-h-screen bg-slate-800">
+    <!--  Header  -->
+    <%- include('partials/header'); %>
+    <!--  Whole Page  -->
+    <main class="h-[calc(100vh)] w-full absolute top-14">
+        <!--  Sidebar  -->
+        <%- include('partials/sidebar'); %>
+
+        <!--  Main Page  -->
+        <div class="pl-[60px] lg:pl-[240px] transition-all duration-500 ease-in-out h-screen overflow-auto">
+            <%- include('partials/content'); %>
+        </div>
+
+    </main>
+
+<%- include('partials/dropdown'); %>
+
+</body>

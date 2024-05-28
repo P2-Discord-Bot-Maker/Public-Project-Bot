@@ -1,0 +1,77 @@
+<div id="info-box" class="hidden bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+    <strong class="font-bold">Info:</strong>
+    <span id="info-message" class="block sm:inline"></span>
+    <button id="ok-button" class="ml-2 inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600 focus:outline-none focus:border-blue-700 focus:ring ring-blue-300 disabled:opacity-50">OK</button>
+</div>
+
+<script>
+    /**
+     * Show an info box with a message.
+     * @param {string} info-message - The message to display in the info box.
+     * @param {string} info-box - The info box element.
+     * @param {string} ok-button - The OK button element.
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        const infoBox = document.getElementById('info-box');
+        const infoMessage = document.getElementById('info-message');
+        const okButton = document.getElementById('ok-button');
+
+        window.showInfo = function(message) {
+            infoMessage.textContent = message;
+            infoBox.classList.remove('hidden');
+            infoBox.focus();
+
+            // Disable pointer events on elements outside the info box
+            const outsideElements = document.querySelectorAll('body > :not(#info-box)');
+            outsideElements.forEach(element => {
+                element.classList.add('pointer-events-none'); // Make elements unfocusable
+                element.setAttribute('tabindex', '-1');
+            });
+
+            // Enable pointer events on the OK button and focus on it
+            okButton.classList.remove('pointer-events-none');
+            okButton.removeAttribute('tabindex');
+            okButton.focus();
+
+            // Add event listener to close info box when clicking outside
+            document.body.addEventListener('click', handleBodyClick);
+        };
+
+        /**
+         * Close the info box when clicking outside of it.
+         * @param {Event} event - The event object.
+         */
+        function handleBodyClick(event) {
+            if (!infoBox.contains(event.target)) {
+                infoBox.classList.add('hidden');
+
+                // Enable pointer events on elements outside the info box
+                const outsideElements = document.querySelectorAll('body > :not(#info-box)');
+                outsideElements.forEach(element => {
+                    element.classList.remove('pointer-events-none');
+                    element.removeAttribute('tabindex');
+                });
+
+                // Remove event listener after closing the info box
+                document.body.removeEventListener('click', handleBodyClick);
+            }
+        }
+
+        /**
+         * Close the info box when clicking the OK button.
+         */
+        okButton.addEventListener('click', function() {
+            infoBox.classList.add('hidden');
+
+            // Enable pointer events on elements outside the info box
+            const outsideElements = document.querySelectorAll('body > :not(#info-box)');
+            outsideElements.forEach(element => {
+                element.classList.remove('pointer-events-none');
+                element.removeAttribute('tabindex');
+            });
+
+            // Remove event listener after closing the info box
+            document.body.removeEventListener('click', handleBodyClick);
+        });
+    });
+</script>
